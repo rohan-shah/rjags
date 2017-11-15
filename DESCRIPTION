@@ -12,4 +12,3 @@ URL: http://www.sourceforge.net/projects/mcmc-jags
 Suggests: tcltk
 Description: Interface to the JAGS MCMC library.
 License: GPL (== 2)
-URL: http://mcmc-jags.sourceforge.net
