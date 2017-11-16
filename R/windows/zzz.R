@@ -14,48 +14,11 @@
     }
     if (!file_test("-d", jags.home)) return(FALSE)
 
-    bindir <- file.path(jags.home, .Platform$r_arch, "bin")
-    jags.dll <- file.path(bindir, paste("libjags-", major,
-                                        .Platform$dynlib.ext, sep=""))
+    bindir <- file.path(jags.home, "libs", "x64")
+    jags.dll <- file.path(bindir, paste("rJags", .Platform$dynlib.ext, sep=""))
     return(file.exists(jags.dll))
 }
 
-
-.findJAGS <- function(hive, major)
-{
-    ## Returns the registry key corresponding to the latest release of
-    ## JAGS-major.x.y, or NULL if no release is found
-  
-    regkey <- try(readRegistry("SOFTWARE\\JAGS", hive = hive, maxdepth = 2,
-                               view="32-bit"), silent = TRUE)
-    if (inherits(regkey, "try-error")) {
-        return(NULL)
-    }
-    keynames <- names(regkey)
-    keynames <- keynames[grep(paste0("^JAGS-", major, "\\."), keynames)]
-    if (length(keynames) == 0) {
-        return(NULL)
-    }
-    else {
-        keynames <- rev(keynames) #Search in reverse order of release number
-        regkey <- regkey[keynames]
-        for (i in seq(along=keynames)) {
-            if(.check.jags.home(regkey[[i]][["InstallDir"]], major)) {
-                return(regkey[i])
-            }
-        }
-        return(NULL)
-    }
-}
-
-.noJAGS <- function(major)
-{
-  paste("Failed to locate any version of JAGS version ", major, "\n\n",
-        "The rjags package is just an interface to the JAGS library\n",
-        "Make sure you have installed JAGS-", major,
-        ".x.y.exe (for any x >=0, y>=0) from\n",
-        "http://www.sourceforge.net/projects/mcmc-jags/files\n", sep="")
-}
 
 .onLoad <- function(lib, pkg)
 {
@@ -66,49 +29,10 @@
     jags.major <- packageVersion(pkg, lib)$major
 
     ## Try environment variable first
-    jags.home <- Sys.getenv("JAGS_HOME")
-    if (nchar(jags.home) > 0) {
-        if (!.check.jags.home(jags.home, jags.major)) {
-            stop("The environment variable JAGS_HOME is set to\n", jags.home,
-                 "\nbut no JAGS installation can be found there\n")
-        }
-    }
-    else {
-        ## Search the registry. We need to look for both machine-wide and
-        ## user-specific installations
-
-        key1 <- .findJAGS("HLM", jags.major)
-        key2 <- .findJAGS("HCU", jags.major)
-
-        if (is.null(key1)) {
-            if (is.null(key2)) {
-                stop(.noJAGS(jags.major))
-            }
-            else {
-                latest <- key2
-            }
-        }
-        else if (is.null(key2) || names(key2) < names(key1)) {
-            latest <- key1
-        }
-        else {
-            latest <- key2
-        }
-
-        jags.home <- latest[[1]][["InstallDir"]]
-    }
-    
-### Add the JAGS bin to the windows PATH, if not already present
-
-    path <- Sys.getenv("PATH")
-    split.path <- strsplit(path, .Platform$path.sep)$PATH
-    bindir <- file.path(jags.home, .Platform$r_arch, "bin")
-    if (!any(split.path == bindir)) {
-        path <- paste(bindir, path, sep=.Platform$path.sep)
-        if (!Sys.setenv("PATH"=path)) {
-            stop("Failed to add the rjags bin directory to the PATH:\n",
-                 bindir)
-        }
+    jags.home <- system.file(package="rjags")
+    if (!.check.jags.home(jags.home, jags.major)) {
+        stop("The environment variable JAGS_HOME is set to\n", jags.home,
+             "\nbut no JAGS installation can be found there\n")
     }
 
 ### Load the rjags dll
@@ -117,8 +41,7 @@
 ### Set the module directory, if the option jags.moddir is not already set
     
     if (is.null(getOption("jags.moddir"))) {
-        options("jags.moddir" = file.path(jags.home, .Platform$r_arch,
-                "modules"))
+        options("jags.moddir" = file.path(jags.home, "libs", "x64"))
     }
 
 ### Check that the module directory actually exists
@@ -128,8 +51,11 @@
              "rjags is looking for the JAGS modules in\n", moddir,
              "\nbut this folder does not exist\n")
     }
-    load.module("basemod", quiet=TRUE)
+    load.module("base", quiet=TRUE)
+    wd <- getwd()
+    setwd(moddir)
     load.module("bugs", quiet=TRUE)
+    setwd(wd)
 
 ### Set progress bar type
     
