@@ -53,6 +53,7 @@
     }
     load.module("base", quiet=TRUE)
     wd <- getwd()
+    #The libiomp5md.dll dependency only gets picked up from the current working directory. So need to change it just for this load. 
     setwd(moddir)
     load.module("bugs", quiet=TRUE)
     setwd(wd)
