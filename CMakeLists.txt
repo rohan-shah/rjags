@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(rJags)
+project(rjags)
 
 option(USE_OPENMP "Use OpenMP" OFF)
 
@@ -23,7 +23,8 @@ set(RFILES read.data.R mcarray.R jags.R jags.object.R dic.R)
 if(WIN32)
 	list(APPEND RFILES windows/zzz.R windows/progress.bar.R)
 else()
-	list(APPEND RFILES unix/zzz.R unix/progress.bar.R)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/R/unix/zzz.R.in ${CMAKE_CURRENT_BINARY_DIR}/R/unix/zzz.R @ONLY)
+	list(APPEND RFILES unix/progress.bar.R)
 endif()
 #Copy package to binary directory. This works differently on windows and linux
 if(WIN32)

@@ -73,7 +73,10 @@ static const R_CallMethodDef CallEntries[] = {
     {NULL, NULL, 0}
 };
 
-__declspec(dllexport) void R_init_rjags(DllInfo *dll)
+#ifdef WIN32
+__declspec(dllexport)
+#endif
+void R_init_rjags(DllInfo *dll)
 {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
