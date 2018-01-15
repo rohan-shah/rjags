@@ -5,9 +5,9 @@
 
     ## Set the module directory
     if (is.null(getOption("jags.moddir"))) {
-        options("jags.moddir" = "@JAGS_MODDIR@")
+        options("jags.moddir" = system.file("libs/", package="rjags"))
     }
-    load.module("basemod", quiet=TRUE)
+    load.module("base", quiet=TRUE)
     load.module("bugs", quiet=TRUE)
 
     ## Set progress bar type
